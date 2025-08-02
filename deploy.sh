@@ -101,7 +101,7 @@ sudo chown $USER:$USER /var/lib/streamservice/videos
 print_status "Configuring firewall..."
 sudo ufw --force enable
 sudo ufw allow ssh
-sudo ufw allow 8080/tcp
+sudo ufw allow 8081/tcp
 sudo ufw allow 8443/tcp
 sudo ufw allow 5433/tcp  # PostgreSQL (optional, for external access)
 sudo ufw allow 6380/tcp  # Redis (optional, for external access)

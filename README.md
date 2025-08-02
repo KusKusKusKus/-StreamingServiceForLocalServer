@@ -83,8 +83,8 @@ docker-compose logs -f
 
 ### 4. Доступ к приложению
 
-- **Веб-интерфейс**: http://localhost:8080
-- **API документация**: http://localhost:8080/swagger
+- **Веб-интерфейс**: http://localhost:8081
+- **API документация**: http://localhost:8081/swagger
 - **База данных**: localhost:5433
 - **Redis**: localhost:6380
 
