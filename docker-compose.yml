@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: stream_postgres
+    environment:
+      POSTGRES_DB: streamservice
+      POSTGRES_USER: streamuser
+      POSTGRES_PASSWORD: streampass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+                ports:
+              - "5433:5432"
+    networks:
+      - stream_network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: stream_redis
+                ports:
+              - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stream_network
+
+  # .NET Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stream_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=streamservice;Username=streamuser;Password=streampass123
+      - Redis__ConnectionString=redis:6379
+      - Storage__VideoPath=/app/videos
+      - Storage__MaxSizeGB=200
+    volumes:
+      - video_storage:/app/videos
+      - ./backend/appsettings.json:/app/appsettings.json
+                ports:
+              - "5001:80"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - stream_network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: stream_frontend
+                ports:
+              - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - stream_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: stream_nginx
+                ports:
+              - "8080:80"
+              - "8443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/ssl:/etc/nginx/ssl
+      - video_storage:/var/www/videos:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - stream_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  video_storage:
+    driver: local
+
+networks:
+  stream_network:
+    driver: bridge 
